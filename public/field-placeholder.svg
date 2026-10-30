@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" fill="none">
+  <defs>
+    <linearGradient id="grass" x1="0" y1="0" x2="960" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#285D3E"/>
+      <stop offset="1" stop-color="#102F21"/>
+    </linearGradient>
+    <pattern id="stripes" width="240" height="560" patternUnits="userSpaceOnUse">
+      <path fill="#fff" fill-opacity=".035" d="M0 0h120v560H0z"/>
+    </pattern>
+  </defs>
+  <path fill="url(#grass)" d="M0 0h960v560H0z"/>
+  <path fill="url(#stripes)" d="M0 0h960v560H0z"/>
+  <g stroke="#fff" stroke-opacity=".5" stroke-width="3">
+    <path d="M54 54h852v452H54z"/>
+    <path d="M480 54v452"/>
+    <circle cx="480" cy="280" r="78"/>
+    <circle cx="480" cy="280" r="3" fill="#fff"/>
+    <path d="M54 164h118v232H54m734-232h118v232H788"/>
+    <path d="M54 218h54v124H54m852-124h-54v124h54"/>
+  </g>
+  <g fill="#fff" fill-opacity=".85">
+    <circle cx="733" cy="172" r="3"/>
+    <circle cx="276" cy="384" r="3"/>
+    <circle cx="614" cy="376" r="2"/>
+    <circle cx="344" cy="186" r="2"/>
+  </g>
+</svg>
