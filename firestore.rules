@@ -12,6 +12,10 @@ service cloud.firestore {
           'durationHours',
           'hourlyPriceEtb',
           'totalPriceEtb',
+          'pricePending',
+          'customerName',
+          'customerPhone',
+          'participantCount',
           'invitedPlayers',
           'participants',
           'ownerUid',
@@ -22,14 +26,74 @@ service cloud.firestore {
         && request.resource.data.fieldId is string
         && request.resource.data.date is string
         && request.resource.data.timeSlot is string
-        && request.resource.data.durationHours == 1
+        && request.resource.data.durationHours in [1, 2, 3]
+        && request.resource.data.hourlyPriceEtb is number
+        && request.resource.data.hourlyPriceEtb >= 0
         && request.resource.data.totalPriceEtb is number
-        && request.resource.data.totalPriceEtb > 0
+        && request.resource.data.totalPriceEtb >= 0
+        && request.resource.data.pricePending is boolean
+        && request.resource.data.customerName is string
+        && request.resource.data.customerName.size() > 1
+        && request.resource.data.customerPhone is string
+        && request.resource.data.customerPhone.size() >= 9
+        && ((request.resource.data.pricePending == false
+              && request.resource.data.hourlyPriceEtb > 0
+              && request.resource.data.totalPriceEtb
+                == request.resource.data.hourlyPriceEtb * request.resource.data.durationHours)
+            || (request.resource.data.pricePending == true
+              && request.resource.data.hourlyPriceEtb == 0
+              && request.resource.data.totalPriceEtb == 0))
         && request.resource.data.invitedPlayers is list
         && request.resource.data.invitedPlayers.size() <= 20
         && request.resource.data.participants is list
         && request.resource.data.participants.size() == request.resource.data.invitedPlayers.size() + 1
+        && request.resource.data.participantCount is int
+        && request.resource.data.participantCount >= request.resource.data.participants.size()
+        && request.resource.data.participantCount <= 30
         && request.resource.data.status == 'pending';
+
+      allow get, list: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /facilityRequests/{requestId} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          'facilityId',
+          'facilityName',
+          'neighborhood',
+          'category',
+          'pricingType',
+          'plan',
+          'date',
+          'preferredTime',
+          'durationHours',
+          'partySize',
+          'message',
+          'customerName',
+          'customerPhone',
+          'ownerUid',
+          'status',
+          'createdAt'
+        ])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.facilityId is string
+        && request.resource.data.facilityName is string
+        && request.resource.data.neighborhood is string
+        && request.resource.data.category is string
+        && request.resource.data.pricingType is string
+        && request.resource.data.date is string
+        && request.resource.data.customerName is string
+        && request.resource.data.customerName.size() > 1
+        && request.resource.data.customerPhone is string
+        && request.resource.data.customerPhone.size() >= 9
+        && request.resource.data.status == 'pending'
+        && (request.resource.data.plan == null || request.resource.data.plan is string)
+        && (request.resource.data.preferredTime == null || request.resource.data.preferredTime is string)
+        && (request.resource.data.durationHours == null || request.resource.data.durationHours is int)
+        && (request.resource.data.partySize == null || (request.resource.data.partySize is int && request.resource.data.partySize >= 1 && request.resource.data.partySize <= 30))
+        && (request.resource.data.message == null || request.resource.data.message is string);
 
       allow get, list: if request.auth != null
         && resource.data.ownerUid == request.auth.uid;

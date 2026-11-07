@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" fill="none">
+  <defs>
+    <linearGradient id="court" x1="0" y1="0" x2="960" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8C4A2F"/>
+      <stop offset="1" stop-color="#4A2013"/>
+    </linearGradient>
+    <pattern id="planks" width="96" height="560" patternUnits="userSpaceOnUse">
+      <path fill="#fff" fill-opacity=".03" d="M0 0h2v560H0z"/>
+    </pattern>
+  </defs>
+  <path fill="url(#court)" d="M0 0h960v560H0z"/>
+  <path fill="url(#planks)" d="M0 0h960v560H0z"/>
+  <g stroke="#fff" stroke-opacity=".5" stroke-width="3">
+    <path d="M54 54h852v452H54z"/>
+    <path d="M480 54v452"/>
+    <circle cx="480" cy="280" r="88"/>
+    <path d="M54 152h160v256H54m692-256h160v256H812"/>
+    <circle cx="480" cy="280" r="3" fill="#fff"/>
+    <path d="M118 152v256"/>
+    <circle cx="120" cy="280" r="3"/>
+    <path d="M842 152v256"/>
+    <circle cx="840" cy="280" r="3"/>
+    <ellipse cx="262" cy="280" rx="110" ry="70"/>
+    <ellipse cx="698" cy="280" rx="110" ry="70"/>
+  </g>
+  <g fill="#fff" fill-opacity=".1">
+    <circle cx="480" cy="280" r="150"/>
+  </g>
+</svg>

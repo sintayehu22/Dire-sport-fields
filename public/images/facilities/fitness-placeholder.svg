@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" fill="none">
+  <defs>
+    <linearGradient id="gymfloor" x1="0" y1="0" x2="960" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F2A3D"/>
+      <stop offset="1" stop-color="#101624"/>
+    </linearGradient>
+    <pattern id="tiles" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path stroke="#fff" stroke-opacity=".05" d="M80 0v80H0"/>
+    </pattern>
+  </defs>
+  <path fill="url(#gymfloor)" d="M0 0h960v560H0z"/>
+  <path fill="url(#tiles)" d="M0 0h960v560H0z"/>
+  <g transform="translate(240 130)">
+    <path d="M64 160h80v80H64z" fill="#34D399" fill-opacity=".55" transform="rotate(-90 104 200)"/>
+    <path d="M392 160h80v80h-80z" fill="#34D399" fill-opacity=".55" transform="rotate(-90 432 200)"/>
+    <path d="M144 175h60v50h-60z" fill="#34D399" fill-opacity=".35"/>
+    <path d="M328 175h60v50h-60z" fill="#34D399" fill-opacity=".35"/>
+    <rect x="204" y="185" width="124" height="30" rx="6" fill="#ffffff" fill-opacity=".75"/>
+    <path d="M60 285v-25M60 145v-25M48 265c0 12 24 12 24 0M48 155c0-12 24-12 24 0" stroke="#34D399" stroke-opacity=".5" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M388 285v-25M388 145v-25M376 265c0 12 24 12 24 0M376 155c0-12 24-12 24 0" stroke="#34D399" stroke-opacity=".5" stroke-width="5" stroke-linecap="round" fill="none"/>
+  </g>
+  <g fill="#fff" fill-opacity=".07">
+    <circle cx="120" cy="90" r="56"/>
+    <circle cx="872" cy="470" r="72"/>
+  </g>
+</svg>

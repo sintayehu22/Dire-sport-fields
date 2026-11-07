@@ -1,5 +1,1 @@
-import FieldDirectory from "@/src/components/field-directory";
-
-export default function Home() {
-  return <FieldDirectory />;
-}
+export { default } from "@/src/app/page";
