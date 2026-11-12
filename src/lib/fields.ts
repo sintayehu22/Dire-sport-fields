@@ -1,12 +1,14 @@
+import BOOKING_CATALOG from "./booking-catalog.json";
+
 /**
  * Football field data for Dire Dawa, Ethiopia.
  *
  * Data policy:
  *  - `plusCode` / `latitude` / `longitude` come from the mapped Google listings for
  *    each ground (decoded with the official Open Location Code algorithm).
- *  - `hourlyPrice`, `surface` and `capacity` are `null` when unverified. Nothing is
- *    invented; details flagged "reported" must be confirmed on site before being
- *    presented as facts.
+ *  - `hourlyPrice`, `surface` and `capacity` are `null` when unverified. Hourly
+ *    prices supplied for specific pitches are listed; other details flagged as
+ *    unverified should be confirmed on site before being presented as facts.
  *  - Conel Football Field has no verified map pin yet, so its coordinates stay null.
  */
 
@@ -59,8 +61,8 @@ export const fields: FootballField[] = [
     latitude: 9.582063,
     longitude: 41.858312,
     googleMapsUrl: mapsUrlFor(9.582063, 41.858312),
-    hourlyPrice: null,
-    priceVerified: false,
+    hourlyPrice: BOOKING_CATALOG["dire-dawa-international-stadium"].hourlyPriceEtb,
+    priceVerified: true,
     surface: "Artificial turf",
     surfaceVerified: false,
     capacity: null,
@@ -68,37 +70,8 @@ export const fields: FootballField[] = [
     imageUrl: FIELD_IMAGE_PLACEHOLDER,
     notes:
       "Main multi-purpose stadium of Dire Dawa, an AFCON 1976 venue, renovated 2018–2024. Artificial turf and a 25,000-seat capacity are reported for the renovated stadium; confirm the current state and booking terms with the stadium office.",
-    availableTimeSlots: DEFAULT_BOOKING_TIME_SLOTS,
-  },
-  {
-    id: "dire-dawa-university-stadium",
-    name: "Dire Dawa University Stadium",
-    alternativeNames: ["DDU Stadium", "Diredawa University Stadium"],
-    neighborhood: "Dire Dawa University campus",
-    plusCode: "6HX3JR8R+RC9",
-    latitude: 9.617038,
-    longitude: 41.841109,
-    googleMapsUrl: mapsUrlFor(9.617038, 41.841109),
-    hourlyPrice: null,
-    priceVerified: false,
-    surface: null,
-    surfaceVerified: false,
-    capacity: null,
-    capacityVerified: false,
-    imageUrl: FIELD_IMAGE_PLACEHOLDER,
-    notes:
-      "Pitch on the Dire Dawa University campus, also referred to as DDU Stadium. Surface, price and capacity to be confirmed.",
-    availableTimeSlots: [
-      "06:00",
-      "07:00",
-      "08:00",
-      "09:00",
-      "15:00",
-      "16:00",
-      "17:00",
-      "18:00",
-      "19:00",
-    ],
+    availableTimeSlots:
+      BOOKING_CATALOG["dire-dawa-international-stadium"].availableTimeSlots,
   },
   {
     id: "diredawa-trainstation-football-pitch",
@@ -109,24 +82,17 @@ export const fields: FootballField[] = [
     latitude: 9.592137,
     longitude: 41.856141,
     googleMapsUrl: mapsUrlFor(9.592137, 41.856141),
-    hourlyPrice: null,
-    priceVerified: false,
+    hourlyPrice: BOOKING_CATALOG["diredawa-trainstation-football-pitch"].hourlyPriceEtb,
+    priceVerified: true,
     surface: null,
     surfaceVerified: false,
     capacity: null,
     capacityVerified: false,
     imageUrl: FIELD_IMAGE_PLACEHOLDER,
     notes:
-      "Neighborhood pitch by the historic railway station area. Surface, price and capacity to be confirmed with the caretaker.",
-    availableTimeSlots: [
-      "07:00",
-      "08:00",
-      "15:00",
-      "16:00",
-      "17:00",
-      "18:00",
-      "19:00",
-    ],
+      "Neighborhood pitch by the historic railway station area. Surface and capacity to be confirmed with the caretaker.",
+    availableTimeSlots:
+      BOOKING_CATALOG["diredawa-trainstation-football-pitch"].availableTimeSlots,
   },
   {
     id: "sebategna-football-pitch",
@@ -137,15 +103,15 @@ export const fields: FootballField[] = [
     latitude: 9.608688,
     longitude: 41.837578,
     googleMapsUrl: mapsUrlFor(9.608688, 41.837578),
-    hourlyPrice: null,
-    priceVerified: false,
+    hourlyPrice: BOOKING_CATALOG["sebategna-football-pitch"].hourlyPriceEtb,
+    priceVerified: true,
     surface: null,
     surfaceVerified: false,
     capacity: null,
     capacityVerified: false,
     imageUrl: FIELD_IMAGE_PLACEHOLDER,
-    notes: "Neighborhood ground in Sebategna. All booking details to be confirmed.",
-    availableTimeSlots: DEFAULT_BOOKING_TIME_SLOTS,
+    notes: "Neighborhood ground in Sebategna. Confirm other booking details with the venue.",
+    availableTimeSlots: BOOKING_CATALOG["sebategna-football-pitch"].availableTimeSlots,
   },
   {
     id: "sabiyan-kuwas-meda",
@@ -313,15 +279,15 @@ export const fields: FootballField[] = [
     latitude: null,
     longitude: null,
     googleMapsUrl: null,
-    hourlyPrice: null,
-    priceVerified: false,
+    hourlyPrice: BOOKING_CATALOG["conel-football-field"].hourlyPriceEtb,
+    priceVerified: true,
     surface: null,
     surfaceVerified: false,
     capacity: null,
     capacityVerified: false,
     imageUrl: FIELD_IMAGE_PLACEHOLDER,
     notes:
-      "No verified map pin found for the Conel pitch yet. Map location, surface, price and capacity pending; confirm the address with locals.",
-    availableTimeSlots: ["06:00", "08:00", "16:00", "18:00", "19:00"],
+      "No verified map pin found for the Conel pitch yet. Map location, surface and capacity pending; confirm the address with locals.",
+    availableTimeSlots: BOOKING_CATALOG["conel-football-field"].availableTimeSlots,
   },
 ];

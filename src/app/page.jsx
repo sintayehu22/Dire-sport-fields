@@ -2,26 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BookingModal from "@/src/components/BookingModal";
 import FacilityRequestModal from "@/src/components/FacilityRequestModal";
+import DireSportLogo from "@/src/components/DireSportLogo";
 import SportIcon from "@/src/components/SportIcon";
-import CityHero from "@/src/components/CityHero";
-import CitySection from "@/src/components/CitySection";
-import CityPlaceCard from "@/src/components/CityPlaceCard";
-import CityDiscover from "@/src/components/CityDiscover";
-import CityCulture from "@/src/components/CityCulture";
-import CityMap from "@/src/components/CityMap";
-import { CITY_LANDMARKS, CITY_MARKETS, CITY_PARKS } from "@/src/lib/city";
+import SportsHero from "@/src/components/SportsHero";
 import {
   SPORT_CATEGORIES,
   matchesCategory,
 } from "@/src/lib/categories";
 import {
-  facilities,
+  facilities as initialFacilities,
   AVAILABILITY_LABELS,
   pricingLabel,
 } from "@/src/lib/facilities";
+import { getPublicFacilities } from "@/src/lib/facilityStore";
+import { getPublicNotifications, getPublicPlatformSettings } from "@/src/lib/platform";
 
 function haversineKm(lat1, lng1, lat2, lng2) {
   const toRad = (value) => (value * Math.PI) / 180;
@@ -107,10 +104,6 @@ function ArrowIcon() {
   );
 }
 
-function LogoIcon({ className = "h-6 w-6" }) {
-  return <SportIcon sport="football" className={className} />;
-}
-
 function PinIcon({ className = "h-3.5 w-3.5" }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={className}>
@@ -154,18 +147,30 @@ function StarIcon() {
   );
 }
 
+function FacilityCardImage({ facility }) {
+  const src = facility.images[0];
+  const alt = `${facility.name} — ${categoryLabel(facility.category)} facility in Dire Dawa`;
+  if (/^https:\/\//i.test(src ?? "")) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} loading="lazy" className="h-44 w-full object-cover transition duration-500 group-hover:scale-105" />;
+  }
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={640}
+      height={352}
+      loading="lazy"
+      className="h-44 w-full object-cover transition duration-500 group-hover:scale-105"
+    />
+  );
+}
+
 function FacilityCard({ facility, distanceKm, onBook }) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 transition duration-200 hover:-translate-y-1 hover:border-emerald-400/30 hover:shadow-[0_20px_55px_rgba(0,0,0,0.35)]">
       <div className="relative h-44 overflow-hidden">
-        <Image
-          src={facility.images[0]}
-          alt={`${facility.name} — ${categoryLabel(facility.category)} facility in Dire Dawa`}
-          width={640}
-          height={352}
-          loading="lazy"
-          className="h-44 w-full object-cover transition duration-500 group-hover:scale-105"
-        />
+        <FacilityCardImage facility={facility} />
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-transparent"
@@ -186,7 +191,7 @@ function FacilityCard({ facility, distanceKm, onBook }) {
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400 px-3 py-1.5 text-xs font-bold text-slate-950">
             <SportIcon sport={facility.category} className="h-3.5 w-3.5" />
-            {facility.pricingType === "hourly" ? "Book now" : "Request access"}
+            {facility.availability === "bookable" ? "Book now" : "Request access"}
           </span>
           {facility.rating !== null && (
             <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-slate-950/80 px-2.5 py-1.5 text-xs font-bold text-amber-300 backdrop-blur">
@@ -236,11 +241,11 @@ function FacilityCard({ facility, distanceKm, onBook }) {
           <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">{facility.notes}</p>
         )}
 
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/60 p-3.5">
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-emerald-400/25 bg-emerald-400/[0.07] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
             Pricing
           </span>
-          <span className="text-right text-sm font-extrabold text-emerald-400">
+          <span className="text-right text-base font-extrabold text-emerald-300">
             {pricingLabel(facility)}
           </span>
         </div>
@@ -257,7 +262,7 @@ function FacilityCard({ facility, distanceKm, onBook }) {
             onClick={() => onBook(facility)}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white/[0.06] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-500 hover:text-slate-950 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400/25"
           >
-            Book Now <ArrowIcon />
+            {facility.availability === "bookable" ? "Book Now" : "Request"} <ArrowIcon />
           </button>
         </div>
       </div>
@@ -267,7 +272,7 @@ function FacilityCard({ facility, distanceKm, onBook }) {
 
 function CategoryNav({ activeCategory, onSelect, counts }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {SPORT_CATEGORIES.map((category) => {
         const isActive = activeCategory === category.key;
         const count = counts[category.key] ?? 0;
@@ -329,6 +334,7 @@ function FilterBar({
   onClearFilters,
   onNearMe,
   visibleCount,
+  totalCount,
 }) {
   const selectBase =
     "min-h-11 w-full rounded-xl border border-white/10 bg-slate-950 px-3 text-sm font-medium text-white outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15";
@@ -475,7 +481,7 @@ function FilterBar({
       </div>
 
       <p className="text-xs font-semibold text-slate-500 lg:ml-auto lg:whitespace-nowrap">
-        {visibleCount} of {facilities.length} facilities shown
+        {visibleCount} of {totalCount} facilities shown
       </p>
     </div>
   );
@@ -483,7 +489,17 @@ function FilterBar({
 
 
 export default function HomePage() {
+  const [facilityList, setFacilityList] = useState(initialFacilities);
+  const [announcements, setAnnouncements] = useState([]);
+  const [platformSettings, setPlatformSettings] = useState({
+    platformName: "Dire Sport Fields",
+    supportEmail: "",
+    supportPhone: "",
+    maintenanceMessage: "",
+    bookingEnabled: true,
+  });
   const [bookingFacility, setBookingFacility] = useState(null);
+  const [bookingError, setBookingError] = useState("");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [neighborhoodFilter, setNeighborhoodFilter] = useState("all");
@@ -494,29 +510,46 @@ export default function HomePage() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState("");
 
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      getPublicFacilities(),
+      getPublicNotifications(3),
+      getPublicPlatformSettings(),
+    ]).then(([nextFacilities, nextAnnouncements, nextSettings]) => {
+      if (!active) return;
+      setFacilityList(nextFacilities);
+      setAnnouncements(nextAnnouncements);
+      setPlatformSettings(nextSettings);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const neighborhoodOptions = useMemo(
     () =>
-      [...new Set(facilities.map((facility) => facility.neighborhood))].sort((a, b) =>
+      [...new Set(facilityList.map((facility) => facility.neighborhood))].sort((a, b) =>
         a.localeCompare(b),
       ),
-    [],
+    [facilityList],
   );
 
   const categoryCounts = useMemo(() => {
-    const counts = { all: facilities.length };
+    const counts = { all: facilityList.length };
     for (const category of SPORT_CATEGORIES) {
       if (category.key === "all") continue;
-      counts[category.key] = facilities.filter((facility) =>
+      counts[category.key] = facilityList.filter((facility) =>
         matchesCategory(facility, category.key),
       ).length;
     }
     return counts;
-  }, []);
+  }, [facilityList]);
 
   const filteredFacilities = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const priceValue = (facility) => priceForSort(facility);
-    return facilities.filter((facility) => {
+    return facilityList.filter((facility) => {
       const haystack = [
         facility.name,
         facility.neighborhood,
@@ -548,12 +581,13 @@ export default function HomePage() {
     priceFilter,
     availabilityFilter,
     timeFilter,
+    facilityList,
   ]);
 
   const distanceMap = useMemo(() => {
     if (!userLocation) return null;
     return new Map(
-      facilities.map((facility) => [
+      facilityList.map((facility) => [
         facility.id,
         facility.latitude !== null && facility.longitude !== null
           ? haversineKm(
@@ -565,7 +599,7 @@ export default function HomePage() {
           : null,
       ]),
     );
-  }, [userLocation]);
+  }, [userLocation, facilityList]);
 
   const visibleFacilities = useMemo(() => {
     const list = [...filteredFacilities];
@@ -656,51 +690,85 @@ export default function HomePage() {
   }
 
   function openBooking(facility) {
+    if (!platformSettings.bookingEnabled) {
+      setBookingError(
+        platformSettings.maintenanceMessage ||
+          "New bookings and facility requests are temporarily paused.",
+      );
+      return;
+    }
+    setBookingError("");
     setBookingFacility(facility);
   }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <header className="sticky top-0 z-40 border-b border-white/5 bg-slate-950/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
-          <Link href="#" className="flex items-center gap-3" aria-label="Dire Sport Fields home">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-slate-950">
-              <LogoIcon />
-            </span>
-            <span className="text-base font-extrabold tracking-tight text-white sm:text-lg">
-              Dire Sport <span className="text-emerald-400">Fields</span>
-            </span>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
+          <Link href="/" aria-label="Dire Sport Fields home" className="shrink-0">
+            <DireSportLogo />
           </Link>
-          <nav aria-label="Main navigation" className="flex items-center gap-3">
-            <a
-              href="#discover"
-              className="hidden px-3 py-2 text-sm font-medium text-slate-300 transition hover:text-white sm:inline-flex"
+          <nav
+            aria-label="Main navigation"
+            className="flex items-center gap-1 overflow-x-auto sm:gap-2"
+          >
+            <Link
+              href="/"
+              className="whitespace-nowrap px-2 py-2 text-xs font-medium text-slate-300 transition hover:text-white sm:px-3 sm:text-sm"
             >
-              Discover
-            </a>
+              Home
+            </Link>
             <a
-              href="#markets"
-              className="hidden px-3 py-2 text-sm font-medium text-slate-300 transition hover:text-white md:inline-flex"
+              href="#sports"
+              className="whitespace-nowrap px-2 py-2 text-xs font-medium text-slate-300 transition hover:text-white sm:px-3 sm:text-sm"
             >
-              Markets
-            </a>
-            <a
-              href="#map"
-              className="hidden px-3 py-2 text-sm font-medium text-slate-300 transition hover:text-white sm:inline-flex"
-            >
-              Map view
+              Sports
             </a>
             <a
               href="#facilities"
-              className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:border-emerald-400/60 hover:bg-white/5"
+              className="whitespace-nowrap px-2 py-2 text-xs font-medium text-slate-300 transition hover:text-white sm:px-3 sm:text-sm"
             >
-              Browse facilities
+              Facilities
             </a>
+            <a
+              href="#about"
+              className="whitespace-nowrap px-2 py-2 text-xs font-medium text-slate-300 transition hover:text-white sm:px-3 sm:text-sm"
+            >
+              About
+            </a>
+            <a
+              href="#contact"
+              className="whitespace-nowrap px-2 py-2 text-xs font-medium text-slate-300 transition hover:text-white sm:px-3 sm:text-sm"
+            >
+              Contact
+            </a>
+            <Link
+              href="/feedback"
+              className="whitespace-nowrap px-2 py-2 text-xs font-medium text-slate-300 transition hover:text-white sm:px-3 sm:text-sm"
+            >
+              Feedback
+            </Link>
           </nav>
         </div>
       </header>
-      <CityHero onFindNearMe={handleNearMe} />
-
+      {(announcements.length > 0 || !platformSettings.bookingEnabled) && (
+        <div className="border-b border-white/5 bg-slate-900/70">
+          <div className="mx-auto max-w-7xl space-y-2 px-5 py-3 sm:px-8">
+            {!platformSettings.bookingEnabled && (
+              <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-4 py-2.5 text-xs font-semibold text-amber-100">
+                {platformSettings.maintenanceMessage || "New bookings and facility requests are temporarily paused."}
+              </p>
+            )}
+            {announcements.map((announcement) => (
+              <div key={announcement.id} className="flex flex-col gap-1 rounded-lg border border-sky-400/15 bg-sky-400/[0.06] px-4 py-2.5 text-xs sm:flex-row sm:items-center sm:gap-3">
+                <span className="font-bold text-white">{announcement.title}</span>
+                <span className="text-slate-400">{announcement.message}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <SportsHero />
 
       <section
         id="sports"
@@ -725,23 +793,63 @@ export default function HomePage() {
       </section>
 
       <section
+        aria-labelledby="featured-facilities-heading"
+        className="border-y border-white/5 bg-slate-900/35"
+      >
+        <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-16">
+          <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
+                Play in Dire Dawa
+              </p>
+              <h2
+                id="featured-facilities-heading"
+                className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl"
+              >
+                Featured Sports Facilities
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">
+                Explore local venues, compare the details available, and choose where to play.
+              </p>
+            </div>
+            <a
+              href="#facilities"
+              className="inline-flex min-h-11 items-center gap-2 self-start rounded-full border border-white/15 px-5 py-2.5 text-sm font-bold text-white transition hover:border-emerald-400/50 hover:bg-white/[0.05] sm:self-auto"
+            >
+              Explore all facilities <ArrowIcon />
+            </a>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {facilityList.slice(0, 3).map((facility) => (
+              <FacilityCard
+                key={facility.id}
+                facility={facility}
+                distanceKm={distanceMap?.get(facility.id) ?? null}
+                onBook={openBooking}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section
         id="facilities"
         className="mx-auto max-w-7xl scroll-mt-24 px-5 pb-16 pt-4 sm:px-8 sm:pb-20"
       >
         <div className="mb-8 flex flex-col justify-between gap-4 sm:mb-10 sm:flex-row sm:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
-              Find your venue
+              Find your next game
             </p>
-            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Facilities around Dire Dawa
+            <h2 id="all-facilities-heading" className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Explore All Sports Facilities
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">
-              Compare courts, pitches, gyms, and pools, then book a slot or request access.
+              Compare courts and pitches, then book a slot or request access.
             </p>
           </div>
           <p className="text-sm font-semibold text-slate-400">
-            {facilities.length} facilities · {SPORT_CATEGORIES.length - 1} sports
+            {facilityList.length} facilities · {SPORT_CATEGORIES.length - 1} sports
           </p>
         </div>
 
@@ -765,7 +873,14 @@ export default function HomePage() {
           onClearFilters={clearFilters}
           onNearMe={handleNearMe}
           visibleCount={visibleFacilities.length}
+          totalCount={facilityList.length}
         />
+
+        {bookingError && (
+          <p role="alert" className="mb-6 rounded-xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+            {bookingError}
+          </p>
+        )}
 
         {locationError && (
           <p
@@ -813,88 +928,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <CityDiscover />
-
-      <CitySection
-        id="landmarks"
-        tone="dark"
-        eyebrow="Famous landmarks"
-        title="Famous places, mapped and explained"
-        subtitle="From the station that started it all to the cave where Stone Age tools were found — these are the places Dire Dawa is known for. Each card links straight to a Google Maps search so you can head out today."
-      >
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {CITY_LANDMARKS.map((place) => (
-            <CityPlaceCard key={place.id} place={place} tone="dark" />
-          ))}
-        </div>
-      </CitySection>
-
-      <div className="border-y border-stone-200">
-        <CitySection
-          id="markets"
-          tone="light"
-          eyebrow="Markets & shopping"
-          title="Do your shopping the Dire way"
-          subtitle="Markets are the city's living rooms. Whether you need spices for dinner, a second phone or just an hour of people-watching, these are the quarters where it happens. Prices and hours are rarely posted — ask, and enjoy the bargaining."
-        >
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {CITY_MARKETS.map((place) => (
-              <CityPlaceCard key={place.id} place={place} tone="light" />
-            ))}
-          </div>
-          <p className="mt-6 text-xs leading-5 text-stone-500">
-            Markets evolve daily. Opening hours and stall locations change with the
-            season — treat these listings as starting points for your own exploring.
-          </p>
-        </CitySection>
-      </div>
-
-      <CitySection
-        id="parks"
-        tone="dark"
-        eyebrow="Parks & recreation"
-        title="Green corners of Dire Dawa"
-        subtitle="Along the Dechatu valley and in the neighbourhoods, the city keeps its patches of shade: gardens, play areas and recreation centres for slow evenings."
-      >
-        <div className="relative mb-8 overflow-hidden rounded-3xl border border-white/10">
-          <Image
-            src="/images/city/hero-aerial.jpg"
-            alt="Aerial view over the Dechatu river valley in Dire Dawa"
-            width={1280}
-            height={560}
-            loading="lazy"
-            sizes="(min-width: 1280px) 80rem, 100vw"
-            className="h-64 w-full object-cover sm:h-72"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-950/25 to-slate-950/60"
-          />
-          <div className="absolute inset-y-0 left-0 flex max-w-md flex-col justify-center p-6 sm:p-8">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-lime-300">
-              The Dechatu valley
-            </p>
-            <p className="mt-2 text-lg font-bold text-white font-display sm:text-xl">
-              The riverbed shapes where the city breathes
-            </p>
-            <p className="mt-1.5 text-sm leading-6 text-slate-300">
-              Green spaces follow the seasonal river, which splits the city into Kezira,
-              Megala and the Sabian side.
-            </p>
-          </div>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {CITY_PARKS.map((place) => (
-            <CityPlaceCard key={place.id} place={place} tone="dark" />
-          ))}
-        </div>
-      </CitySection>
-
-      <CityCulture />
-
-      <CityMap onBook={openBooking} />
-
-      <section id="how-it-works" className="scroll-mt-24 border-b border-white/5">
+      <section id="about" className="scroll-mt-24 border-b border-white/5">
         <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
@@ -904,29 +938,40 @@ export default function HomePage() {
               Why choose Dire Sport Fields
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-400 sm:text-base">
-              One platform for playing and exploring Dire Dawa — built on verified
-              local listings, not guesswork.
+              A simpler way to discover local sports venues and get your next game organized.
             </p>
           </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
                 number: "01",
-                title: "Everything in one place",
+                title: "Discover in one place",
                 description:
-                  "Every mapped pitch, court, gym, and recreational venue around Dire Dawa, searchable by sport, price and distance in seconds.",
+                  "Browse different sports facilities across Dire Dawa from one convenient directory.",
               },
               {
                 number: "02",
-                title: "Book the real way",
+                title: "Compare facility details",
                 description:
-                  "Football pitches take instant hourly bookings; courts, gyms, and pools send booking requests the venue confirms by phone.",
+                  "Review the available location, activities, pricing, and access information before choosing.",
               },
               {
                 number: "03",
-                title: "Built for Dire Dawa",
+                title: "Find locations easily",
                 description:
-                  "Football groups can split the cost in ETB, prices are marked where confirmed, and city landmarks and markets are only a tab away.",
+                  "Use neighborhood details and map links to find a venue and plan your trip.",
+              },
+              {
+                number: "04",
+                title: "Book conveniently",
+                description:
+                  "Submit a booking or facility request online, with the right next step based on the venue.",
+              },
+              {
+                number: "05",
+                title: "Save time organizing",
+                description:
+                  "Shortlist a place, check the details, and bring your team together with less back-and-forth.",
               },
             ].map((step) => (
               <article
@@ -944,60 +989,106 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-white/5">
+      <section id="how-it-works" className="scroll-mt-24 border-b border-white/5 bg-slate-900/35">
+        <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
+              Simple steps
+            </p>
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              How Booking Works
+            </h2>
+          </div>
+          <ol className="mx-auto mt-10 grid max-w-5xl gap-4 md:grid-cols-3">
+            {[
+              {
+                number: "01",
+                title: "Choose a sport",
+                description: "Pick an activity that fits your game.",
+              },
+              {
+                number: "02",
+                title: "Find a facility and time",
+                description: "Compare venue details and choose a suitable time.",
+              },
+              {
+                number: "03",
+                title: "Submit your request",
+                description: "Send your booking request and wait for confirmation when required.",
+              },
+            ].map((step) => (
+              <li
+                key={step.number}
+                className="rounded-2xl border border-white/10 bg-slate-950/60 p-6"
+              >
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/10 text-sm font-extrabold text-emerald-300">
+                  {step.number}
+                </span>
+                <h3 className="mt-4 text-base font-bold text-white">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{step.description}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <footer id="contact" className="scroll-mt-24 border-t border-white/5">
         <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-sm">
-              <span className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-slate-950">
-                  <LogoIcon />
-                </span>
-                <span className="text-base font-extrabold tracking-tight text-white">
-                  Dire Sport <span className="text-emerald-400">Fields</span>
-                </span>
-              </span>
+              <Link href="/" aria-label="Dire Sport Fields home">
+                <DireSportLogo />
+              </Link>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Find a venue. Discover the city. Bring your team and play in Dire Dawa.
+                Your City. Your Sport. Your Game. Discover and book sports facilities across Dire Dawa.
               </p>
             </div>
-            <nav aria-label="Footer navigation" className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
+            <nav
+              aria-label="Footer navigation"
+              className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm"
+            >
+              <Link href="/" className="text-slate-400 transition hover:text-emerald-300">
+                Home
+              </Link>
               <a href="#sports" className="text-slate-400 transition hover:text-emerald-300">
                 Sports
               </a>
               <a href="#facilities" className="text-slate-400 transition hover:text-emerald-300">
                 Facilities
               </a>
-              <a href="#discover" className="text-slate-400 transition hover:text-amber-300">
-                Discover
+              <a href="#about" className="text-slate-400 transition hover:text-emerald-300">
+                About
               </a>
-              <a href="#landmarks" className="text-slate-400 transition hover:text-amber-300">
-                Landmarks
+              <a href="#contact" className="text-slate-400 transition hover:text-emerald-300">
+                Contact
               </a>
-              <a href="#markets" className="text-slate-400 transition hover:text-amber-300">
-                Markets
-              </a>
-              <a href="#parks" className="text-slate-400 transition hover:text-lime-300">
-                Parks
-              </a>
-              <a href="#culture" className="text-slate-400 transition hover:text-amber-300">
-                Culture
-              </a>
-              <a href="#map" className="text-slate-400 transition hover:text-emerald-300">
-                Map view
-              </a>
+              <Link href="/feedback" className="text-slate-400 transition hover:text-emerald-300">
+                Send feedback
+              </Link>
             </nav>
           </div>
-          <p className="mt-8 border-t border-white/5 pt-5 text-xs leading-5 text-slate-600">
-            City photographs: Wikimedia Commons contributors, CC BY / CC BY-SA. Locations
-            for landmarks and parks resolve by name search — confirm details locally.
+          {(platformSettings.supportEmail || platformSettings.supportPhone) && (
+            <p className="mt-6 text-xs text-slate-500">
+              Support: {platformSettings.supportEmail || platformSettings.supportPhone}
+              {platformSettings.supportEmail && platformSettings.supportPhone
+                ? ` · ${platformSettings.supportPhone}`
+                : ""}
+            </p>
+          )}
+          <p className="mt-8 border-t border-white/5 pt-5 text-xs leading-5 text-slate-500">
+            Facility contact details and booking availability are shown when confirmed. Check venue details before your visit.
           </p>
         </div>
       </footer>
 
-      {bookingFacility && bookingFacility.pricingType === "hourly" && (
-        <BookingModal facility={bookingFacility} onClose={() => setBookingFacility(null)} />
+      {bookingFacility &&
+        bookingFacility.pricingType === "hourly" &&
+        bookingFacility.availability === "bookable" && (
+        <BookingModal field={bookingFacility} onClose={() => setBookingFacility(null)} />
       )}
-      {bookingFacility && bookingFacility.pricingType !== "hourly" && (
+      {bookingFacility &&
+        (bookingFacility.pricingType !== "hourly" ||
+          bookingFacility.availability !== "bookable") && (
         <FacilityRequestModal
           facility={bookingFacility}
           onClose={() => setBookingFacility(null)}

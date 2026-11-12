@@ -1,6 +1,7 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -23,15 +24,37 @@ const app = isConfigured
     : initializeApp(firebaseConfig)
   : null;
 
+const ADMIN_APP_NAME = "dire-sport-fields-admin";
+const adminApp = isConfigured
+  ? getApps().some((candidate) => candidate.name === ADMIN_APP_NAME)
+    ? getApp(ADMIN_APP_NAME)
+    : initializeApp(firebaseConfig, ADMIN_APP_NAME)
+  : null;
+
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
+export const functions = app
+  ? getFunctions(
+      app,
+      process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_REGION || "us-central1",
+    )
+  : null;
+
+export const adminAuth = adminApp ? getAuth(adminApp) : null;
+export const adminDb = adminApp ? getFirestore(adminApp) : null;
+export const adminFunctions = adminApp
+  ? getFunctions(
+      adminApp,
+      process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_REGION || "us-central1",
+    )
+  : null;
 
 export function getFirebaseServices() {
-  if (!auth || !db) {
+  if (!db) {
     throw new Error(
-      "Firebase is not configured. Add your Firebase values to .env.local and restart the development server.",
+      "Firestore database is not configured. Add your Firebase values to .env.local and restart the development server.",
     );
   }
 
-  return { auth, db };
+  return { db };
 }

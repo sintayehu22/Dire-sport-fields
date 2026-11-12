@@ -6,13 +6,7 @@ import SportIcon from "@/src/components/SportIcon";
 
 const DURATIONS = [1, 2, 3];
 const TIME_PREFERENCES = ["Morning", "Afternoon", "Evening"];
-const COURT_CATEGORIES = ["basketball", "volleyball", "tennis", "badminton", "handball"];
-const FALLBACK_GYM_PLANS = [
-  "Daily access",
-  "Weekly membership",
-  "Monthly membership",
-  "Training session (if offered)",
-];
+const COURT_CATEGORIES = ["basketball", "volleyball"];
 
 const formatEtb = (amount) =>
   `${amount.toLocaleString("en-US", { maximumFractionDigits: 2 })} ETB`;
@@ -37,7 +31,7 @@ function partySizeLabel(category) {
   return "Number of attendees";
 }
 
-function PriceSummary({ facility, plan, durationHours, partySize }) {
+function PriceSummary({ facility, durationHours, partySize }) {
   if (isCourtCategory(facility.category)) {
     const total = hasPrice(facility.hourlyPrice) ? facility.hourlyPrice * durationHours : null;
     return (
@@ -52,27 +46,13 @@ function PriceSummary({ facility, plan, durationHours, partySize }) {
       </div>
     );
   }
-  if (facility.pricingType === "per_person" || facility.category === "swimming") {
+  if (facility.pricingType === "per_person") {
     const total = hasPrice(facility.perPersonPrice) ? facility.perPersonPrice * partySize : null;
     return (
       <div className="flex items-center justify-between gap-4 text-sm text-slate-300">
         <span>
           {facility.name}
           {partySize ? ` · ${partySize} visitors` : ""}
-        </span>
-        <span className="font-semibold text-white">
-          {total !== null ? formatEtb(total) : "Contact for price"}
-        </span>
-      </div>
-    );
-  }
-  if (facility.pricingType === "membership") {
-    const pricedPlan = facility.membershipPlans.find((p) => p.label === plan);
-    const total = pricedPlan && hasPrice(pricedPlan.price) ? pricedPlan.price : null;
-    return (
-      <div className="flex items-center justify-between gap-4 text-sm text-slate-300">
-        <span>
-          {facility.name} · {plan}
         </span>
         <span className="font-semibold text-white">
           {total !== null ? formatEtb(total) : "Contact for price"}
@@ -93,7 +73,6 @@ export default function FacilityRequestModal({ facility, onClose }) {
   const [date, setDate] = useState(today);
   const [preferredTime, setPreferredTime] = useState("");
   const [durationHours, setDurationHours] = useState(1);
-  const [plan, setPlan] = useState("");
   const [partySize, setPartySize] = useState(isCourtCategory(facility.category) ? 10 : 3);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -101,15 +80,6 @@ export default function FacilityRequestModal({ facility, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [confirmation, setConfirmation] = useState("");
-
-  const gymPlanOptions =
-    facility.pricingType === "membership"
-      ? facility.membershipPlans.length > 0
-        ? facility.membershipPlans.map((p) => p.label)
-        : FALLBACK_GYM_PLANS
-      : [];
-
-  const selectedPlan = plan || gymPlanOptions[0] || "";
 
   useEffect(() => {
     function handleKeyDown(event) {
@@ -121,10 +91,6 @@ export default function FacilityRequestModal({ facility, onClose }) {
   }, [isSubmitting, onClose]);
 
   const showCourtFields = isCourtCategory(facility.category);
-  const showSwimFields =
-    facility.category === "swimming" || facility.activities.includes("swimming");
-  const showGymPlans =
-    facility.pricingType === "membership" && facility.category === "gym";
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -164,9 +130,9 @@ export default function FacilityRequestModal({ facility, onClose }) {
         neighborhood: facility.neighborhood,
         category: facility.category,
         pricingType: facility.pricingType,
-        plan: showGymPlans ? selectedPlan || null : null,
+        plan: null,
         date,
-        preferredTime: showCourtFields ? preferredTime || "Any time" : showSwimFields ? (preferredTime || "Any session") : null,
+        preferredTime: showCourtFields ? preferredTime || "Any time" : null,
         durationHours: showCourtFields ? durationHours : null,
         partySize: players,
         message,
@@ -277,24 +243,8 @@ export default function FacilityRequestModal({ facility, onClose }) {
               />
             </label>
 
-            {showGymPlans ? (
-              <label className={labelClass}>
-                Membership plan
-                <select
-                  value={selectedPlan}
-                  onChange={(event) => setPlan(event.target.value)}
-                  className={inputBase}
-                >
-                  {gymPlanOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-          ) : (
             <label className={labelClass}>
-              {showCourtFields ? "Preferred time" : showSwimFields ? "Session" : "Preferred time"}
+              Preferred time
                 <select
                   value={preferredTime}
                   onChange={(event) => setPreferredTime(event.target.value)}
@@ -308,7 +258,6 @@ export default function FacilityRequestModal({ facility, onClose }) {
                   ))}
                 </select>
               </label>
-            )}
           </div>
 
           {showCourtFields && (
@@ -368,7 +317,6 @@ export default function FacilityRequestModal({ facility, onClose }) {
           <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
             <PriceSummary
               facility={facility}
-              plan={selectedPlan}
               durationHours={durationHours}
               partySize={Number(partySize)}
             />

@@ -333,10 +333,9 @@ export const CITY_PARKS: CityPlace[] = [
     kindLabel: "Recreation centre",
     tagline: "A mapped recreation listing in Papa.",
     description:
-      "A recreation centre listed on the map in the Papa area on the Sabian side of the city. Which facilities are open to visitors should be confirmed on site — and it is also listed among our sport facilities.",
+      "A recreation centre listed on the map in the Papa area on the Sabian side of the city. Which facilities are open to visitors should be confirmed on site.",
     neighborhood: "Papa, Sabian side",
     mapsQuery: "Papa Recreation Centre Dire Dawa",
-    facilityId: "papa-recreation-centre",
   },
 ];
 

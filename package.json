@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test src/lib/eatTime.test.mjs functions/domain.test.js functions/admin-domain.test.js",
+    "test:booking": "node --test src/lib/eatTime.test.mjs functions/domain.test.js functions/admin-domain.test.js"
   },
   "dependencies": {
     "firebase": "^13.1.0",
@@ -23,6 +25,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
+    "firebase-tools": "^15.35.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

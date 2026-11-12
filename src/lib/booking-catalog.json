@@ -1,0 +1,30 @@
+{
+  "dire-dawa-international-stadium": {
+    "name": "Dire Dawa International Stadium",
+    "neighborhood": "Kezira (city center)",
+    "hourlyPriceEtb": 1500,
+    "maxPlayers": 22,
+    "availableTimeSlots": ["06:00", "07:00", "08:00", "09:00", "15:00", "16:00", "17:00", "18:00", "19:00"]
+  },
+  "diredawa-trainstation-football-pitch": {
+    "name": "Diredawa Trainstation Football Pitch",
+    "neighborhood": "Train station district",
+    "hourlyPriceEtb": 900,
+    "maxPlayers": 22,
+    "availableTimeSlots": ["07:00", "08:00", "15:00", "16:00", "17:00", "18:00", "19:00"]
+  },
+  "sebategna-football-pitch": {
+    "name": "Sebategna Football Pitch",
+    "neighborhood": "Sebategna",
+    "hourlyPriceEtb": 850,
+    "maxPlayers": 22,
+    "availableTimeSlots": ["06:00", "07:00", "08:00", "09:00", "15:00", "16:00", "17:00", "18:00", "19:00"]
+  },
+  "conel-football-field": {
+    "name": "Conel Football Field",
+    "neighborhood": "Conel",
+    "hourlyPriceEtb": 950,
+    "maxPlayers": 22,
+    "availableTimeSlots": ["06:00", "08:00", "16:00", "18:00", "19:00"]
+  }
+}

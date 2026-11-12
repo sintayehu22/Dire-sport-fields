@@ -3,12 +3,6 @@ export const SPORT_CATEGORIES = [
   { key: "football", label: "Football" },
   { key: "basketball", label: "Basketball" },
   { key: "volleyball", label: "Volleyball" },
-  { key: "tennis", label: "Tennis" },
-  { key: "badminton", label: "Badminton" },
-  { key: "swimming", label: "Swimming" },
-  { key: "gym", label: "Gym & Fitness" },
-  { key: "handball", label: "Handball" },
-  { key: "recreation", label: "Other Recreation" },
 ] as const;
 
 export type SportCategoryKey = (typeof SPORT_CATEGORIES)[number]["key"];
